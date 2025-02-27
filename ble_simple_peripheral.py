@@ -34,7 +34,7 @@ raw_uid = unique_id()
 DEVICE_UID = "".join("{:02X}".format(b) for b in raw_uid)  # HEX 문자열 변환
 
 class BLESimplePeripheral:
-    def __init__(self, ble, name):
+    def __init__(self, ble, name, interval):
         self._ble = ble
         self._ble.active(True)
         self._ble.irq(self._irq)
@@ -42,7 +42,7 @@ class BLESimplePeripheral:
         self._connections = set()
         self._write_callback = None
         self._payload = advertising_payload(name=name, services=[_UART_UUID])
-        self._advertise()
+        self._advertise(interval)
 
     def _irq(self, event, data):
         # Track connections so we can send notifications.
