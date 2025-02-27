@@ -17,11 +17,12 @@ class BLEManager:
         self._name = self._load_ble_name()  # 저장된 BLE 이름 불러오기
         self.latest_time = config.DEFAULT_START_TIME  # 기본 최신 시간 설정
         self.period = config.DEFAULT_PERIOD  # 기본 로깅 주기 설정
+        self.interval = config.ADVERTISE_INTERVAL 
         self.command = None  # 현재 실행할 명령어
         self.partial_data = ""  # 조각난 데이터 저장 버퍼
 
         #  BLE 장치 초기화 및 이벤트 핸들러 등록
-        self.sp = BLESimplePeripheral(self._ble, name=self._name)
+        self.sp = BLESimplePeripheral(self._ble, name=self._name, interval = self.interval)
         self.sp.on_write(self.on_rx)
         
         print(f"BLE Started with name: {self._name}")
@@ -45,8 +46,11 @@ class BLEManager:
             f.write(new_name)
 
         # BLE 장치 재설정
-        self.sp = BLESimplePeripheral(self._ble, name=self._name)
+        self.sp = BLESimplePeripheral(self._ble, name=self._name, interval= self.interval)
         self.sp.on_write(self.on_rx)
+
+        # BLE 광고를 새로 시작
+        self.start_advertising()
         
     # ==========================================================
     # [3] BLE 데이터 수신 및 명령 처리
@@ -116,6 +120,8 @@ class BLEManager:
                 }
 
         except Exception as e:
+            print("error {str(e)}")
+
             return {"status": "error", "message": str(e)}
     
     # ==========================================================
@@ -168,28 +174,21 @@ class BLEManager:
                 time.sleep(0.3)
 
             print("✅ File sent successfully.")
-            self.clear_sent_data(header)
+            self.clear_sent_data()
 
             return True
 
         except OSError:
             return False
 
-    # TODO - 데이터가 제대로 삭제 되지 않고 있음
-    def clear_sent_data(self, header):
-        """전송된 데이터 삭제 후, 헤더만 남기기"""
+    def clear_sent_data(self):
+        """CSV 파일을 완전히 초기화하고, 헤더를 다시 작성"""
         try:
             with open(config.DATA_FILE, "w") as file:
-                file.write(header + "\n")
-                file.flush()  # 파일 즉시 저장
-                file.close()  # 파일 닫기
-            
-            time.sleep(0.1)  # 파일 시스템 반영 대기
-            
+                file.write(",".join(config.DATA_HEADER) + "\n")  # 헤더 저장
             print("🗑️ Sent data cleared, only header remains.")
         except Exception as e:
             print(f"⚠️ Error clearing sent data: {e}")
-            
     
     # ==========================================================
     # [5] BLE 광고 관리
@@ -198,4 +197,4 @@ class BLEManager:
     def start_advertising(self):
         """BLE 광고 시작"""
         if not self.sp.is_connected():  # 연결 중이 아닐 때만 광고 실행
-            self.sp._advertise(interval_us=1000000) # 1초 인터벌
+            self.sp._advertise(interval_us = self.interval)
