@@ -5,10 +5,9 @@
 
 ### 🔹 주요 기능
 - **센서 데이터 로깅**: 온도 및 습도(DHT20), CPU 온도를 측정하여 CSV 파일로 저장
-- **BLE 통신**: BLE Peripheral로 동작하며, 데이터를 송수신 가능
-- **UART 기반 BLE 통신**: BLE를 통해 데이터를 JSON 형식으로 송수신
-- **RTC(Real-Time Clock) 동기화**: BLE를 통해 시간 설정 및 관리
+- **UART 기반 BLE 통신**: BLE Peripheral로 동작하며, BLE를 통해 데이터를 JSON 형식으로 송수신
 - **BLE 광고**: 주기적으로 BLE 광고를 실행하여 장치 검색 가능
+- **RTC(Real-Time Clock) 동기화**: BLE를 통해 시간 설정 및 관리
 
 ## 📂 프로젝트 구조
 ```plaintext
@@ -28,7 +27,7 @@ pico2w_ble_sensor_logger/
 - BLE 및 센서 로깅을 관리하는 메인 실행 파일
 - **RTC 시간 설정 및 변환**
 - **BLE 명령 처리**: 시간 동기화 및 센서 로깅 시작
-- **BLE 광고 상태 확인**: 연결이 끊어지면 다시 광고 시작
+
 - **센서 데이터 로깅**: 주기마다 센서 데이터를 파일에 기록
 
 ### 2️⃣ `ble_advertising.py` (BLE 광고)
@@ -65,11 +64,10 @@ pico2w_ble_sensor_logger/
 2. **RTC 시간 설정 및 변환**
 3. **BLE 명령 수신 및 처리**
 4. **센서 데이터 로깅** (주기마다 `SensorLogger`를 통해 CSV에 저장)
-5. **BLE 광고 유지 및 상태 체크**
 
 ### 🔵 2. BLE 통신 (`ble_manager.py`, `ble_peripheral.py`)
 - **BLE Peripheral 동작**: UUID 기반으로 TX(송신), RX(수신) 특성 설정
-- **BLE 광고 및 연결 관리**
+- **BLE 광고 및 연결 관리** : 연결 및 연결 해제 이벤트 관리 (해제 시 재광고)
 - **CSV 데이터 전송 기능**:  BLE를 통해 CSV 데이터를 JSON 형식으로 전송 가능
 
 ### 🟠 3. 센서 데이터 처리 (`data_processor.py`)
