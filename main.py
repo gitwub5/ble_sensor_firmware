@@ -2,7 +2,7 @@
 import bluetooth
 import utime
 from ble_manager import BLEManager
-from dataprocessor import SensorLogger
+from data_processor import SensorLogger
 import config
 import machine
 

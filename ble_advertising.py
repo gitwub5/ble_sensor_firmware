@@ -1,5 +1,4 @@
-# Helpers for generating BLE advertising payloads.
-
+# ble_adveertising.py
 from micropython import const
 import struct
 import bluetooth

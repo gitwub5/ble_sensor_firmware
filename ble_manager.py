@@ -1,6 +1,6 @@
 # ble_manager.py
 import time
-from ble_simple_peripheral import BLESimplePeripheral
+from ble_peripheral import BLEPeripheral
 import config
 import json
 
@@ -22,7 +22,7 @@ class BLEManager:
         self.partial_data = ""  # 조각난 데이터 저장 버퍼
 
         #  BLE 장치 초기화 및 이벤트 핸들러 등록
-        self.sp = BLESimplePeripheral(self._ble, name=self._name, interval = self.interval)
+        self.sp = BLEPeripheral(self._ble, name=self._name, interval = self.interval)
         self.sp.on_write(self.on_rx)
         
         print(f"BLE Started with name: {self._name}")
@@ -46,7 +46,7 @@ class BLEManager:
             f.write(new_name)
 
         # BLE 장치 재설정
-        self.sp = BLESimplePeripheral(self._ble, name=self._name, interval= self.interval)
+        self.sp = BLEPeripheral(self._ble, name=self._name, interval= self.interval)
         self.sp.on_write(self.on_rx)
 
         # BLE 광고를 새로 시작

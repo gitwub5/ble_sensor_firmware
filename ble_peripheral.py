@@ -1,6 +1,5 @@
-# ble_simple_peripheral.py
+# ble_peripheral.py
 import bluetooth
-import random
 import struct
 import time
 from ble_advertising import advertising_payload
@@ -33,7 +32,7 @@ _UART_SERVICE = (
 raw_uid = unique_id() 
 DEVICE_UID = "".join("{:02X}".format(b) for b in raw_uid)  # HEX 문자열 변환
 
-class BLESimplePeripheral:
+class BLEPeripheral:
     def __init__(self, ble, name, interval):
         self._ble = ble
         self._ble.active(True)
