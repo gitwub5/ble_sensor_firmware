@@ -1,4 +1,5 @@
 # ble_manager.py
+import bluetooth
 import time
 from ble_peripheral import BLEPeripheral
 import config
@@ -6,10 +7,10 @@ import json
 
 # ------------------------- [BLEManager Class Definition] -------------------------
 class BLEManager:
-    def __init__(self, ble):
+    def __init__(self):
         """Initialize BLEManager class"""
+        ble = bluetooth.BLE()
         self._ble = ble
-        self._ble.active(True)
         
         # Default BLE settings
         self._name = self._load_ble_name()  # Load stored BLE name
@@ -20,7 +21,7 @@ class BLEManager:
         self.partial_data = ""  # Buffer to store fragmented data
 
         # Initialize BLE device and register event handler
-        self.sp = BLEPeripheral(self._ble, name=self._name, interval=self.interval)
+        self.sp = BLEPeripheral(self._ble, self._name, self.interval)
         self.sp.on_write(self.on_rx)
         
         print(f"BLE Started with name: {self._name}")
@@ -41,11 +42,8 @@ class BLEManager:
             f.write(new_name)
 
         # Reinitialize BLE device
-        self.sp = BLEPeripheral(self._ble, name=self._name, interval=self.interval)
+        self.sp = BLEPeripheral(self._ble, self._name, self.interval)
         self.sp.on_write(self.on_rx)
-
-        # Restart BLE advertising
-        self.start_advertising()
         
     # ------------------------- [BLE Data Reception and Command Processing] -------------------------
     def on_rx(self, data):
@@ -177,8 +175,3 @@ class BLEManager:
         except Exception as e:
             print(f"⚠️ Error clearing sent data: {e}")
     
-    # ------------------------- [BLE Advertising Management] -------------------------
-    def start_advertising(self):
-        """Start BLE advertising"""
-        if not self.sp.is_connected():  # Only start advertising if not connected
-            self.sp._advertise(interval_us=self.interval)

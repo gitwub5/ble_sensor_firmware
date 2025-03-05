@@ -1,9 +1,7 @@
 # main.py
-import bluetooth
 import utime
 from ble_manager import BLEManager
 from data_processor import SensorLogger
-import config
 import machine
 
 # RTC initialization
@@ -92,8 +90,7 @@ def log_sensor_data(sensor_logger, period_seconds, last_logged_time):
 # ------------------------- [Main Loop] -------------------------
 def main():
     # Initialize BLE
-    ble = bluetooth.BLE()
-    ble_manager = BLEManager(ble)
+    ble_manager = BLEManager()
 
     # Initialize time-related variables
     sensor_logger = None
