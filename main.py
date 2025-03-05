@@ -6,25 +6,25 @@ from data_processor import SensorLogger
 import config
 import machine
 
-# RTC 초기화
+# RTC initialization
 rtc = machine.RTC()
 
-# ------------------------- [RTC 관련 함수] -------------------------
+# ------------------------- [RTC Functions] -------------------------
 def set_rtc_time(time_str):
-    """'YYYY-MM-DD HH:MM:SS' 형식의 문자열을 RTC에 설정"""
+    """Set RTC with a time string in 'YYYY-MM-DD HH:MM:SS' format"""
     try:
         year, month, day, hour, minute, second = map(int, time_str.replace("-", " ").replace("T", " ").replace(":", " ").split())
-        rtc.datetime((year, month, day, 0, hour, minute, second, 0))  # 요일은 0, 마이크로초는 0
-        print(f"✅ RTC 설정 완료: {time_str}")
+        rtc.datetime((year, month, day, 0, hour, minute, second, 0))  # Day of the week is 0, microseconds are 0
+        print(f"✅ RTC set successfully: {time_str}")
     except Exception as e:
-        print(f"❌ RTC 설정 오류: {e}")
+        print(f"❌ RTC setting error: {e}")
 
 def get_rtc_time():
-    """현재 RTC 시간을 'YYYY-MM-DDTHH:MM:SS' 형식으로 반환"""
+    """Return the current RTC time in 'YYYY-MM-DDTHH:MM:SS' format"""
     year, month, day, _, hour, minute, second, _ = rtc.datetime()
     return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
 
-# ------------------------- [시간 변환 함수] -------------------------
+# ------------------------- [Time Conversion Functions] -------------------------
 def convert_to_epoch(start_time):
     """Converts 'YYYY-MM-DD HH:MM:SS' format to an epoch timestamp."""
     try:
@@ -51,7 +51,7 @@ def convert_period_to_seconds(period):
         print(f"Error converting period: {e}")
         return None
 
-# ------------------------- [BLE 명령 처리] -------------------------
+# ------------------------- [BLE Command Processing] -------------------------
 def process_ble_command(ble_manager, sensor_logger, period_seconds):
     if ble_manager.command:
         start_time = ble_manager.latest_time
@@ -72,59 +72,43 @@ def process_ble_command(ble_manager, sensor_logger, period_seconds):
     
     return sensor_logger, period_seconds
 
-# ------------------------- [BLE 광고 상태 확인] -------------------------
-def check_ble_advertising(ble_manager, last_advertising_check, current_time):
-    """연결이 끊어진 경우 BLE 광고를 다시 시작"""
-    if utime.ticks_diff(current_time, last_advertising_check) >= config.ADVERTISING_CHECK_INTERVAL_MS:
-        if ble_manager.sp and not ble_manager.sp.is_connected():
-            ble_manager.start_advertising()
-            print("🔄 Connection lost, restarting BLE advertising...")
-        return utime.ticks_ms()
-    return last_advertising_check
-
-# ------------------------- [센서 데이터 로깅] -------------------------
+# ------------------------- [Sensor Data Logging] -------------------------
 def log_sensor_data(sensor_logger, period_seconds, last_logged_time):
-    """RTC 시간을 기준으로 주기가 되면 센서 데이터를 로깅"""
-    current_time = get_rtc_time()  # 현재 RTC 시간 가져오기
-    current_epoch = convert_to_epoch(current_time)  # 현재 시간 epoch 변환
+    """Log sensor data at defined intervals based on RTC time"""
+    current_time = get_rtc_time()  # Get current RTC time
+    current_epoch = convert_to_epoch(current_time)  # Convert current time to epoch
 
-     # 🔄 마지막으로 로그를 남긴 시간이 같은 경우, 중복 로깅 방지
+    # Prevent duplicate logging if the last logged time is the same
     if current_epoch == last_logged_time:
         return last_logged_time
 
     if last_logged_time is None or (current_epoch - last_logged_time) >= period_seconds:
         sensor_logger.get_sensor_log(current_time)
-        print(f"📌 {current_time} - 센서 데이터 로깅됨!")
-        return current_epoch  # 마지막 로깅 시간 업데이트
+        print(f"📌 {current_time} - Sensor data logged!")
+        return current_epoch  # Update last logged time
     
-    return last_logged_time  # 업데이트 없음
+    return last_logged_time  # No update
 
-# ------------------------- [메인 루프] -------------------------
+# ------------------------- [Main Loop] -------------------------
 def main():
-    #ble 초기화
+    # Initialize BLE
     ble = bluetooth.BLE()
     ble_manager = BLEManager(ble)
 
-    # 시간 변수 초기화
-    last_advertising_check = utime.ticks_ms()
+    # Initialize time-related variables
     sensor_logger = None
     period_seconds = None
     last_logged_time = None
 
     while True:
-        current_time = utime.ticks_ms()
-
-        # 1️⃣ BLE 광고 상태 확인 (연결이 끊어졌다면 광고 시작)
-        last_advertising_check = check_ble_advertising(ble_manager, last_advertising_check, current_time)
-
-        # 2️⃣ BLE 명령 처리 (새로운 데이터 로깅 시작)
+        # 1. Process BLE commands (start new data logging)
         sensor_logger, period_seconds = process_ble_command(ble_manager, sensor_logger, period_seconds)
 
-        # 3️⃣ 주기마다 센서 데이터 로깅 실행
+        # 2. Execute sensor data logging at regular intervals
         if sensor_logger is not None and period_seconds is not None:
             last_logged_time = log_sensor_data(sensor_logger, period_seconds, last_logged_time)
 
-        # 1초 대기
+        # Wait for 1 second
         utime.sleep_ms(1000)
 
 if __name__ == "__main__":

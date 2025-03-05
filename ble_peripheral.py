@@ -1,9 +1,7 @@
 # ble_peripheral.py
 import bluetooth
-import struct
-import time
 from ble_advertising import advertising_payload
-from machine import Pin, unique_id
+
 from micropython import const
 
 _IRQ_CENTRAL_CONNECT = const(1)
@@ -28,9 +26,6 @@ _UART_SERVICE = (
     _UART_UUID,
     (_UART_TX, _UART_RX),
 )
-
-raw_uid = unique_id() 
-DEVICE_UID = "".join("{:02X}".format(b) for b in raw_uid)  # HEX 문자열 변환
 
 class BLEPeripheral:
     def __init__(self, ble, name, interval):
