@@ -38,7 +38,7 @@ class BLEPeripheral:
         self._write_callback = None
         self._payload = advertising_payload(name=name, services=[_UART_UUID])
         
-        self._advertise(self._interval, True)
+        self.advertise(self._interval, True)
 
     def _irq(self, event, data):
         # Track connections so we can send notifications.
@@ -51,7 +51,7 @@ class BLEPeripheral:
             print("Disconnected", conn_handle)
             self._connections.discard(conn_handle)  # 변경: remove → discard
             # Start advertising again to allow a new connection.
-            self._advertise(self._interval, True)
+            self.advertise(self._interval, True)
         elif event == _IRQ_GATTS_WRITE:
             conn_handle, value_handle = data
             value = self._ble.gatts_read(value_handle)
@@ -65,9 +65,13 @@ class BLEPeripheral:
     def is_connected(self):
         return len(self._connections) > 0
 
-    def _advertise(self, interval_us, connectable):
+    def advertise(self, interval_us, connectable = True):
         print("Starting advertising")
         self._ble.gap_advertise(interval_us, adv_data=self._payload, connectable = connectable)
+
+    def stop_advertise(self):
+        print("Stopping BLE Advertising")
+        self._ble.gap_advertise(None)
 
     def on_write(self, callback):
         self._write_callback = callback

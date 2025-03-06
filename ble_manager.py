@@ -21,8 +21,8 @@ class BLEManager:
         self.partial_data = ""  # Buffer to store fragmented data
 
         # Initialize BLE device and register event handler
-        self.sp = BLEPeripheral(self._ble, self._name, self.interval)
-        self.sp.on_write(self.on_rx)
+        self.perip = BLEPeripheral(self._ble, self._name, self.interval)
+        self.perip.on_write(self.on_rx)
         
         print(f"BLE Started with name: {self._name}")
 
@@ -42,8 +42,8 @@ class BLEManager:
             f.write(new_name)
 
         # Reinitialize BLE device
-        self.sp = BLEPeripheral(self._ble, self._name, self.interval)
-        self.sp.on_write(self.on_rx)
+        self.perip = BLEPeripheral(self._ble, self._name, self.interval)
+        self.perip.on_write(self.on_rx)
         
     # ------------------------- [BLE Data Reception and Command Processing] -------------------------
     def on_rx(self, data):
@@ -63,11 +63,11 @@ class BLEManager:
                 response = self.process_command(complete_command)
 
                 # Send response via BLE in JSON format
-                self.sp.send(json.dumps(response))
+                self.perip.send(json.dumps(response))
 
             except json.JSONDecodeError:
                 print("❌ JSON Parsing Error")
-                self.sp.send(json.dumps({"status": "error", "message": "Invalid JSON"}))
+                self.perip.send(json.dumps({"status": "error", "message": "Invalid JSON"}))
                 self.partial_data = ""  # Reset buffer on error
 
             status = f"Status -> Time: {self.latest_time}, Period: {self.period}, Name: {self._name}"
@@ -124,7 +124,7 @@ class BLEManager:
                 lines = [line.strip() for line in file.readlines()]  # Read entire file
                 
             if len(lines) <= 1:
-                self.sp.send(json.dumps({"status": "success", "message": "No data available"}))
+                self.perip.send(json.dumps({"status": "success", "message": "No data available"}))
                 return True
             
             data_lines = lines[1:]  # Extract only data lines
@@ -132,7 +132,7 @@ class BLEManager:
             total_batches = (len(data_lines) + batch_size - 1) // batch_size  # Calculate total batches
             print(f"📡 Sending {len(data_lines)} lines via BLE in {total_batches} batches...")
             
-            if not self.sp.is_connected():  # Stop if connection is lost
+            if not self.perip.is_connected():  # Stop if connection is lost
                     print("❌ BLE connection lost. Stopping transmission.")
                     return False
             
@@ -150,7 +150,7 @@ class BLEManager:
 
                 # Exception handling for BLE transmission
                 try:
-                    self.sp.send(json_payload)
+                    self.perip.send(json_payload)
                     print(f"✅ Sent batch {i // batch_size + 1} / {total_batches}")
                 except Exception as e:
                     print(f"⚠️ BLE send error: {e}")
